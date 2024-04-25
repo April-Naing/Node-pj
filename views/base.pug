@@ -1,0 +1,36 @@
+doctype html 
+html
+    head 
+        block head
+            meta(charset="UTF-8")
+            meta(name="viewport", content="width=device-width, initial-scale=1.0")
+            meta(name="description", content="Your website description here")
+
+            link(href='https://fonts.googleapis.com/css?family=Lato:300,300i,700' rel='stylesheet')
+
+            link(rel='stylesheet' href='/css/style.css')
+            link(rel='shortcut icon' type='image/png' href='/img/favicon.png')
+
+            title Natours | #{title}
+    body 
+        //Header
+        include _header
+
+        //Section
+        block content 
+            h1 This is the placeholder heading
+        //- section.overview 
+        //- h1=tour
+
+        //Footer
+        include _footer
+
+        //- script(src=`https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.8/axios.min.js`)
+        //- script(src='/js/login.js')
+        script(src='/js/bundle.js')
+
+
+        
+
+
+
