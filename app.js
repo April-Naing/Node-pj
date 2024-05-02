@@ -66,7 +66,8 @@ app.use(express.static(path.join(__dirname ,'after-section-06/public')));
 
 app.use((req , res , next) => {
     req.requestTime = new Date().toISOString;
-    // console.log(req.cookies);
+    // console.log(process.argv); 
+    // console.log(req.cookies); 
     next();
 })
 

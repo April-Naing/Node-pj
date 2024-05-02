@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('../utils/appError');
-const sendEmail = require('./../utils/email');
+const Email = require('./../utils/email');
 const crypto = require('crypto');
 
 const signToken = id => {
@@ -34,7 +34,7 @@ const createSendToken = (user , statusCode , res) => {
         data : {
             user 
         }
-    });
+    });   
 }
 
 exports.signup = catchAsync(async (req , res , next) => {
@@ -44,8 +44,11 @@ exports.signup = catchAsync(async (req , res , next) => {
         // email : req.body.email ,
         // password : req.body.password,
         // passwordConfirm : req.body.passwordConfirm
-        // }
+        // }  
     );
+    const url = `${req.protocol}://${req.get('host')}/me`;
+    console.log(url)
+    new Email(newUser , url).sendWelcome();
 
     createSendToken( newUser , 201, res);
 
@@ -62,12 +65,15 @@ exports.login = catchAsync(async(req , res, next) => {
     
     // 2)check if user exist && password is correct
     const user = await User.findOne({email}).select('+password');
-    // console.log(user.email) 
+
     // const correct = await  user.correctPassword(password , user.password);
+    console.log(password , user.password)
+    console.log(await user.correctPassword(password , user.password))
+
+        // if(!user){
+        // return next(new AppError('Incorrect email or password' , 401))
+        // }
     
-    if(!user || !(await  user.correctPassword(password , user.password))){
-        return next(new AppError('Incorrect email or password' , 401))
-    }
     // 3)If everything ok,send token to client
     createSendToken(user, 200 , res);
 
@@ -169,16 +175,15 @@ exports.forgotpassword = catchAsync (async (req, res, next) => {
     // 3)send it back as a email
     const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetpassword/${resetToken}`;
 
-    const message = `Forgot your password?Submit a PATCH request with your new password and
-    passwordConfrim to: ${resetURL}.\nIf you didn't forget your password , please ignore this email!` ;
-
     try{
-        await sendEmail({
-            email : user.email ,
-            subject : 'Your password reset token(valid for 10 min)' ,
-            message
-        }); 
+        // await sendEmail({
+        //     email : user.email ,
+        //     subject : 'Your password reset token(valid for 10 min)' ,
+        //     message
+        // }); 
 
+        new Email(user , resetURL).sendPasswordReset();
+        
         res.status(200).json({ 
             status : 'success',
             message : 'Token send to email!'
@@ -228,12 +233,17 @@ exports.resetpassword =catchAsync(async(req,res, next) => {
 exports.updatePassword = catchAsync(async (req, res, next) => {
     // 1) Get User from collection
     const user =  await User.findById(req.user.id).select('+password')
-
     
+    console.log(req.body.passwordCurrent, user.password , user.passwordConfirm , req.body.password) ;
     // 2)Check if posted current password is correct
+
+    // also need to recover like login
+    console.log(await user.correctPassword(req.body.passwordCurrent , user.password))
     if(!(await user.correctPassword(req.body.passwordCurrent , user.password))){
         return next(new AppError('Your current password is wrong'), 401)
-    }
+    } 
+
+
     // 3) If so , update password
     user.password = req.body.password ;
     user.passwordConfirm = req.body.passwordConfirm ;

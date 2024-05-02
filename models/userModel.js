@@ -15,7 +15,10 @@ const userSchema = new mongoose.Schema({
         lowercase : true,
         validate : [ validator.isEmail , 'Please provide a valid email']
     },
-    photo : String ,
+    photo : {
+        type : String ,
+        default :'default.jpg' 
+    },
     role : {
         type : String ,
         enum : ['user' , 'guide' , 'lead-guide' , 'admin'],
@@ -49,17 +52,20 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// userSchema.pre('save', async function(next){
-//     // Only run this function if pw was actually modified
-//     if(!this.isModified('password')) return next();
+userSchema.pre('save', async function(next){
+    console.log({isChange: this.isModified('password')});
 
-//     // hash pw 
-//     this.password = await bcrypt.hash(this.password , 12);
+    // Only run this function if pw was actually modified
+    if(!this.isModified('password')) return next();
 
-//     //delete pw confirm
-//     this.passwordConfirm = undefined ;
-//     next();
-// });
+    // hash pw 
+    this.password = await bcrypt.hash(this.password , 12);
+
+    //delete pw confirm
+    this.passwordConfirm = undefined ;
+    next();
+});
+
 userSchema.index({ price : 1});
 
 userSchema.pre(/^find/ , function (next){
@@ -69,7 +75,7 @@ userSchema.pre(/^find/ , function (next){
 });
 
 userSchema.methods.correctPassword = async function( candidatePassword , userPassword){
-    return await bcrypt.compare(candidatePassword , userPassword);
+    return await bcrypt.compare(candidatePassword, userPassword);
 };
 
 userSchema.methods.changePasswordAfter = function( JWTTimestamp ){
